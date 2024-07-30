@@ -1,0 +1,149 @@
+---
+title: "DADA2DEJUCloaca"
+author: "Tricia"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+##Load required packages
+```{r warning=FALSE, message=FALSE}
+library(dada2)
+```
+
+##Provide path to sequences
+```{r}
+path <- "sequences"
+list.files(path)
+```
+
+##Import file names and make matched list
+```{r}
+# Forward and reverse fastq filenames have format: SAMPLENAME_R1_001.fastq and SAMPLENAME_R2_001.fastq
+fnFs <- sort(list.files(path, pattern="_R1_001.fastq", full.names = TRUE))
+fnRs <- sort(list.files(path, pattern="_R2_001.fastq", full.names = TRUE))
+# Extract sample names, assuming filenames have format: SAMPLENAME_XXX.fastq
+sample.names <- sapply(strsplit(basename(fnFs), "_"), `[`, 1)
+```
+
+##Inspect forward read quality
+```{r}
+plotQualityProfile(fnFs[1:2])
+```
+
+##Inspect reverse read quality
+```{r}
+plotQualityProfile(fnRs[1:2])
+```
+
+##Assign file names for filtered reads
+```{r}
+# Place filtered files in filtered/ subdirectory
+filtFs <- file.path(path, "filtered", paste0(sample.names, "_F_filt.fastq.gz"))
+filtRs <- file.path(path, "filtered", paste0(sample.names, "_R_filt.fastq.gz"))
+names(filtFs) <- sample.names
+names(filtRs) <- sample.names
+```
+
+##Filter reads
+```{r}
+# Filter based on quality plots above. for this work, trim first 10 from F and R, trunc 240 F 210 R
+out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs, truncLen=c(240,210), trimLeft=c(10, 10),
+              maxN=0, maxEE=c(2,2), truncQ=2, rm.phix=TRUE,
+              compress=TRUE, multithread=TRUE)
+head(out)
+```
+
+##learn error rates forward reads 
+```{r}
+errF <- learnErrors(filtFs, multithread=TRUE)
+plotErrors(errF, nominalQ=TRUE)
+```
+
+##learn error rates reverse reads 
+```{r}
+errR <- learnErrors(filtRs, multithread=TRUE)
+plotErrors(errR, nominalQ=TRUE)
+```
+
+##Dereplicate
+```{r}
+derepFs <- derepFastq(filtFs)
+derepRs <- derepFastq(filtRs)
+# Name the derep-class objects by the sample names
+names(derepFs) <- sample.names
+names(derepRs) <- sample.names
+```
+
+##Sample Inference Forward reads
+```{r}
+dadaFs <- dada(derepFs, err=errF, multithread=TRUE)
+dadaFs[[1]]
+```
+
+##Sample Inference Reverse reads
+```{r}
+dadaRs <- dada(derepRs, err=errR, multithread=TRUE)
+dadaRs[[1]]
+```
+
+##Merge paired reads
+```{r}
+mergers <- mergePairs(dadaFs, derepFs, dadaRs, derepRs, verbose=TRUE)
+```
+
+##Construct the sequence table
+```{r}
+seqtab <- makeSequenceTable(mergers)
+dim(seqtab)
+# Inspect distribution of sequence lengths
+table(nchar(getSequences(seqtab)))
+```
+
+##Remove sequences that are too long or too short
+```{r}
+seqtab <- seqtab[,nchar(colnames(seqtab)) %in% 230:237]
+#check new sequence length
+dim(seqtab)
+table(nchar(getSequences(seqtab)))
+```
+
+##Remove chimeras
+```{r}
+seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
+dim(seqtab.nochim)
+#Determine % chimeric abundance
+sum(seqtab.nochim)/sum(seqtab)
+```
+
+##Save seqtab.nochim as an R file
+```{r}
+save(seqtab.nochim, file="../RData/seqtab.nochim.RData")
+```
+
+##Track reads through pipeline
+```{r}
+getN <- function(x) sum(getUniques(x))
+track <- cbind(out, sapply(dadaFs, getN), sapply(dadaRs, getN), sapply(mergers, getN), rowSums(seqtab.nochim))
+# If processing a single sample, remove the sapply calls: e.g. replace sapply(dadaFs, getN) with getN(dadaFs)
+colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "nonchim")
+rownames(track) <- sample.names
+head(track)
+```
+
+##Assign taxonomy to seqtab.nochim
+```{r}
+#Download taxonomy file from https://zenodo.org/record/4587955 and place it in working directory
+
+#assign taxonomy. make sure file name corresponds with downloaded file
+taxa <- assignTaxonomy(seqtab.nochim, "silva_nr99_v138.1_wSpecies_train_set.fa.gz", multithread=TRUE)
+
+#inspect taxonomy
+taxa.print <- taxa # Removing sequence rownames for display only
+rownames(taxa.print) <- NULL
+head(taxa.print)
+```
+
+##Save taxa as an R file
+```{r}
+save(taxa, file="../RData/taxa.RData")
+```

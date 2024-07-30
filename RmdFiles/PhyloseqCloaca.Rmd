@@ -1,0 +1,844 @@
+---
+title: "PhyloseqDEJUCloaca"
+author: "Tricia"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+##Load required packages
+```{r warning=FALSE, message=FALSE}
+library(ggplot2)
+library(car)
+library(dada2)
+library(phyloseq)
+library(vegan)
+library(nlme)
+library(plyr)
+library(Biostrings)
+library(tidyverse)
+library(ggpubr)
+library(decontam) #isContaminant
+library(BiMiCo) #rm_nonbac
+library(microbiome)
+library(MicEco)
+library(lme4)
+library(dplyr)
+```
+
+##Set seed for reproducibility
+```{r}
+set.seed(777)
+```
+
+##Load taxa and seqtab files to start here
+```{r}
+load("../RData/taxa.RData")
+load("../RData/seqtab.nochim.RData")
+```
+
+##import metadata
+```{r}
+metadata<-read.csv("../metadata.csv", header=TRUE, row.names = 1)
+```
+
+##Create phyloseq object
+```{r}
+#make sure the seqtab.nochim and taxa objects are loaded
+physeq <- phyloseq(otu_table(seqtab.nochim, taxa_are_rows=FALSE), 
+               sample_data(metadata), 
+               tax_table(taxa))
+physeq
+```
+##inspect library sizes
+```{r Inspect Library Size}
+df <- as.data.frame(sample_data(physeq)) # Put sample_data into a ggplot-friendly data.frame
+df$LibrarySize <- sample_sums(physeq)
+df <- df[order(df$LibrarySize),]
+df$Index <- seq(nrow(df))
+ggplot(data=df, aes(x=Index, y=LibrarySize, color=control)) + geom_point()
+```
+##identify contaminants
+```{r Identify Contaminants at Higher Freq in Negative Controls}
+sample_data(physeq)$is.neg <- sample_data(physeq)$control == "yes"
+contamdf.prev <- isContaminant(physeq, method="prevalence", neg="is.neg", threshold=0.5) #identify contaminants in higher frequency in negative controls
+table(contamdf.prev$contaminant)
+head(which(contamdf.prev$contaminant))
+```
+
+##remove control samples
+```{r Remove Control Samples}
+# Make phyloseq object of presence-absence in negative controls and true samples
+physeq.pa <- transform_sample_counts(physeq, function(abund) 1*(abund>0))
+physeq.pa.neg <- prune_samples(sample_data(physeq.pa)$control == "yes", physeq.pa)
+physeq <- prune_samples(sample_data(physeq.pa)$control == "no", physeq.pa) #this will contain positives
+physeq
+```
+##graph controls
+```{r Graph Controls}
+df.pa <- data.frame(pa.pos=taxa_sums(physeq), pa.neg=taxa_sums(physeq.pa.neg),
+                      contaminant=contamdf.prev$contaminant)
+ggplot(data=df.pa, aes(x=pa.neg, y=pa.pos, color=contaminant)) + geom_point() +
+  xlab("Prevalence (Negative Controls)") + ylab("Prevalence (True Samples)")
+```
+##remove contaminants
+```{r Remove Contaminants}
+physeq <- prune_taxa(!contamdf.prev$contaminant, physeq)
+physeq
+```
+
+##Remove the sequence itself and replace with ASV
+```{r}
+dna <- Biostrings::DNAStringSet(taxa_names(physeq))
+names(dna) <- taxa_names(physeq)
+physeq <- merge_phyloseq(physeq, dna)
+taxa_names(physeq) <- paste0("ASV", seq(ntaxa(physeq)))
+physeq
+```
+
+##remove mitochondria and chloroplast matches. 
+```{r Remove Mito and Chloro}
+physeq <- physeq %>% subset_taxa( Family!= "Mitochondria" | is.na(Family) & Order!="Chloroplast" | is.na(Order) ) 
+physeq
+```
+
+##remove all non bacterial sequences
+```{r Remove Non-Bact}
+physeq<-rm_nonbac(physeq)
+physeq
+```
+
+#object representing time0
+```{r}
+physeq0 = subset_samples(physeq, time != "1" & time != "2" & time != "3" 
+                         & time != "4" & time != "5")
+
+physeq0
+```
+
+## Save physeq objects for easy loading
+```{r}
+save(physeq, file="../RData/physeq.RData")
+save(physeq0, file="../RData/physeq0.RData")
+```
+
+##Alpha Diversity based on flock
+```{r warning=FALSE, message=FALSE}
+p=plot_richness(physeq,x="flock", measures=c("Observed","Simpson", "Shannon"))
+flockalpha=p + geom_boxplot(data = p$data, aes(x = flock, y = value), alpha = 0.1) + theme(axis.title = element_text(face="bold"))
+flockalpha
+```
+
+##Alpha Diversity based on sex with stats
+```{r warning=FALSE, message=FALSE}
+p=plot_richness(physeq,x="sex", measures=c("Observed","Simpson", "Shannon"))
+BAR <- p + geom_boxplot(data = p$data, aes(x = sex, y = value, color = NULL), alpha = 0.1) + theme(axis.title = element_text(face="bold"))
+
+bar <- BAR + stat_compare_means(aes(label = ifelse(..p.signif.. < 0.05, ..p.signif.., "")), method = "wilcox.test", label.x = 1.3, label.y = Inf)
+
+barsex<-bar+ stat_compare_means(aes(label = ..p.signif..), method = "wilcox.test",  label.x = 1.5)
+
+barsex
+```
+
+##Alpha Diversity based on population
+```{r warning=FALSE, message=FALSE}
+p=plot_richness(physeq,x="population", measures=c("Observed","Simpson", "Shannon"))
+BAR <- p + geom_boxplot(data = p$data, aes(x = population, y = value, color = NULL), alpha = 0.1) + theme(axis.title = element_text(face="bold"))
+
+bar <- BAR + stat_compare_means(aes(label = ifelse(..p.signif.. < 0.05, ..p.signif.., "")), method = "wilcox.test", label.x = 1.3, label.y = Inf)
+
+barpop<-bar+ stat_compare_means(aes(label = ..p.signif..), method = "wilcox.test",  label.x = 1.5)
+
+barpop
+```
+
+##Alpha Diversity based on flock t=0
+```{r warning=FALSE, message=FALSE}
+p0=plot_richness(physeq0,x="flock", measures=c("Observed","Simpson", "Shannon"))
+
+flockalpha0=p0 + geom_boxplot(data = p0$data, aes(x = flock, y = value), alpha = 0.1) + xlab("Flock") + theme(axis.title = element_text(face = "bold"), 
+          axis.title.x = element_text(face="bold"), plot.title = element_text(size = 10, face = "bold", hjust = .5))
+
+flockalpha0
+```
+
+##Alpha Diversity based on sex with stats t=0
+```{r warning=FALSE, message=FALSE}
+p0=plot_richness(physeq0,x="sex", measures=c("Observed","Simpson", "Shannon"))
+
+sexalpha0=p0 + geom_boxplot(data = p0$data, aes(x = sex, y = value), alpha = 0.1) + xlab("Sex") + theme(axis.title = element_text(face = "bold"), 
+          axis.title.x = element_text(face="bold"), plot.title = element_text(size = 10, face = "bold", hjust = .5))
+
+print(sexalpha0)
+```
+
+##Alpha Diversity based on population t=0
+```{r warning=FALSE, message=FALSE}
+p0=plot_richness(physeq0,x="population", measures=c("Observed","Simpson", "Shannon"))
+
+popalpha0=p0 + geom_boxplot(data = p0$data, aes(x = population, y = value), alpha = 0.1) + xlab("Population") + theme(axis.title = element_text(face = "bold"), 
+          axis.title.x = element_text(face="bold"), plot.title = element_text(size = 10, face = "bold", hjust = .5))
+
+print(popalpha0)
+```
+
+##Alpha Diversity based on Time Point
+```{r warning=FALSE, message=FALSE}
+x <- seq(0,5,by=1)
+p=plot_richness(physeq,x="timepoint", measures=c("Observed","Simpson", "Shannon"))
+timepointalpha=p + geom_boxplot(data = p$data, aes(x = timepoint, y = value, color = NULL), alpha = 0.1) +theme(axis.title = element_text(face="bold"))
+timepointalpha
+```
+
+##grid alpha div time 0
+```{r}
+alpha0=ggarrange(flockalpha0,                                                 
+          ggarrange(sexalpha0, popalpha0, ncol = 2, labels = c("B", "C")), 
+          nrow = 2, 
+          labels = "A"                                        
+          ) 
+
+alpha0
+```
+
+##export tiff with 300dpi
+```{r}
+ggsave(
+  filename="../figures/Figure01AlphaDiv0.tiff",
+  plot = alpha0,
+  width = 200,
+  height = 200,
+  units = c("mm"),
+  dpi = 300,
+)
+```
+
+##Export alpha diveristy
+```{r}
+# Estimate richness
+alphadiv <- estimate_richness(physeq, measures = c("Observed", "Shannon", "Simpson"))
+
+# Create a new column with the original sample names
+alphadiv$sample <- gsub("^X", "", rownames(alphadiv))
+
+# Write the modified data frame to a CSV file
+write.csv(alphadiv, "../alphasheets/alpha_div.csv", row.names = FALSE)
+
+```
+
+##Merge metadata with alpha_div. Make sure sample column has header "sample" in both files
+```{r}
+# Read the CSV files
+metadata <- read.csv("../metadata.csv")
+alpha_div <- read.csv("../alphasheets/alpha_div.csv")
+
+# Merge the dataframes by the 'sample' column
+mergedalpha <- merge(metadata, alpha_div, by = "sample")
+
+# Write the merged dataframe to a new CSV file
+write.csv(mergedalpha, "../alphasheets/mergedalpha.csv", row.names = FALSE)
+```
+
+##hist
+```{r}
+par(mfrow = c(1, 3))
+hist(mergedalpha$Shannon, main="Shannon diversity", xlab="", breaks=10)
+hist(mergedalpha$Simpson, main="Simpson diversity", xlab="", breaks=10)
+hist(mergedalpha$Observed, main="Observed ASVs", xlab="", breaks=10)
+```
+
+##Test for normality Shannon
+```{r}
+shapiro.test(mergedalpha$Shannon)
+shapiro.test(mergedalpha$Simpson)
+shapiro.test(mergedalpha$Observed)
+```
+
+## mixed effect model for population accounting for repeated sampling of birds
+```{r}
+# Fit a mixed-effects model for the Observed metric
+model_observed <- lmer(Observed ~ population + (1 | bird), data = mergedalpha)
+
+# Fit a mixed-effects model for the Shannon metric
+model_shannon <- lmer(Shannon ~ population + (1 | bird), data = mergedalpha)
+
+# Fit a mixed-effects model for the Simpson metric
+model_simpson <- lmer(Simpson ~ population + (1 | bird), data = mergedalpha)
+
+# Summary of the models
+summary(model_observed)
+summary(model_shannon)
+summary(model_simpson)
+```
+
+## mixed effect model for sex accounting for repeated sampling of birds
+```{r}
+# Fit a mixed-effects model for the Observed metric
+model_observed <- lmer(Observed ~ sex + (1 | bird), data = mergedalpha)
+
+# Fit a mixed-effects model for the Shannon metric
+model_shannon <- lmer(Shannon ~ sex + (1 | bird), data = mergedalpha)
+
+# Fit a mixed-effects model for the Simpson metric
+model_simpson <- lmer(Simpson ~ sex + (1 | bird), data = mergedalpha)
+
+# Summary of the models
+summary(model_observed)
+summary(model_shannon)
+summary(model_simpson)
+```
+
+## mixed effect model for flock accounting for repeated sampling of birds
+```{r}
+# Fit a mixed-effects model for the Observed metric
+model_observed <- lmer(Observed ~ flock + (1 | bird), data = mergedalpha)
+
+# Fit a mixed-effects model for the Shannon metric
+model_shannon <- lmer(Shannon ~ flock + (1 | bird), data = mergedalpha)
+
+# Fit a mixed-effects model for the Simpson metric
+model_simpson <- lmer(Simpson ~ flock + (1 | bird), data = mergedalpha)
+
+# Summary of the models
+summary(model_observed)
+summary(model_shannon)
+summary(model_simpson)
+```
+
+
+##timepoint Friedman (repeated measures non parametric)
+```{r warning=FALSE}
+#Observed ASVs
+friedman.test(y=mergedalpha$Observed, groups=mergedalpha$time, blocks=mergedalpha$bird)
+pairwise.wilcox.test(mergedalpha$Observed, mergedalpha$time, p.adjust.method="holm")
+
+#Shannon
+friedman.test(y=mergedalpha$Shannon, groups=mergedalpha$time, blocks=mergedalpha$bird)
+pairwise.wilcox.test(mergedalpha$Shannon, mergedalpha$time, p.adjust.method="holm")
+
+#Simpson
+friedman.test(y=mergedalpha$Simpson, groups=mergedalpha$time, blocks=mergedalpha$bird)
+pairwise.wilcox.test(mergedalpha$Simpson, mergedalpha$time, p.adjust.method="holm")
+```
+
+##Alpha Diversity Time Point Observed
+```{r}
+observed<-ggscatter(mergedalpha, x = "time", y = "Observed", 
+          add = "reg.line", conf.int = TRUE, cor.coef = TRUE, cor.coeff.args = list(method = "pearson", label.x = 3.2, label.sep = "\n"),
+          xlab = "Time", ylab = "Observed ASVs")
+observed
+```
+
+##Alpha Diversity Time Point Shannon
+```{r}
+shannon<-ggscatter(mergedalpha, x = "time", y = "Shannon", 
+          add = "reg.line", conf.int = TRUE, cor.coef = TRUE, cor.coeff.args = list(method = "pearson", label.x = 2, label.y=4, label.sep = "\n"),
+          xlab = "Time", ylab = "Shannon Diversity Index")
+shannon
+```
+
+##Alpha Diversity Time Point Simpson
+```{r}
+simpson<-ggscatter(mergedalpha, x = "time", y = "Simpson", 
+          add = "reg.line", conf.int = TRUE, cor.coef = TRUE, cor.coeff.args = list(method = "pearson", label.x = 3.2, label.y= .96, label.sep = "\n"),
+          xlab = "Time", ylab = "Simpsons Index")
+simpson
+```
+
+##grid
+```{r}
+timepoint=ggarrange(observed, shannon, simpson, 
+          labels = c("A", "B", "C"),
+          ncol = 3, nrow = 1)
+
+timepoint
+```
+
+##export tiff with 300dpi
+```{r}
+ggsave(
+  filename="../figures/Figure02Timepoint.tiff",
+  plot = timepoint,
+  width = 250,
+  height = 100,
+  units = c("mm"),
+  dpi = 300,
+)
+```
+
+##Remove taxa with relative abundance <0.005%
+```{r}
+minTotRelAbun = .00005
+x = taxa_sums(physeq)
+keepTaxa = (x / sum(x)) > minTotRelAbun
+physeqprune = prune_taxa(keepTaxa, physeq)
+physeqprune
+```
+
+##Remove taxa with relative abundance <0.005%
+```{r}
+minTotRelAbun = .00005
+x = taxa_sums(physeq0)
+keepTaxa = (x / sum(x)) > minTotRelAbun
+physeqprune0 = prune_taxa(keepTaxa, physeq0)
+physeqprune0
+```
+## Save physeq objects for easy loading
+```{r}
+save(physeqprune, file="../RData/physeqprune.RData")
+save(physeqprune0, file="../RData/physeqprune0.RData")
+```
+
+##Determine prevelance of ASVs across all samples
+```{r}
+prevalence=prevalence(
+  physeqprune,
+  detection = 0,
+  sort = FALSE,
+  count = FALSE,
+  include.lowest = FALSE
+)
+
+write.csv(prevalence,"../sheets/prevalence.csv")
+
+# Read the CSV file
+prevalence_data <- read.csv("../sheets/prevalence.csv")
+
+# Create bins for every 0.05 interval
+# Define breaks from 0 to 1 by 0.05
+breaks <- seq(0, 1, by = 0.05)
+
+# Cut the prevalence data into these bins
+prevalence_data$bins <- cut(prevalence_data$x, breaks, include.lowest = TRUE)
+
+# Count the number of ASVs in each bin
+asv_counts <- table(prevalence_data$bins)
+
+# Print the results
+print(asv_counts)
+```
+
+##Create graph of ASV prevalence (data from prevelance.csv)
+```{r}
+data<-data.frame(
+  NumberofASVs=c(2460,642,234,121,87,34,37,22,14,19,16,6,10,7,8,5,0,3,4,1),   
+  SamplePercent=c(5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100))
+
+asvprevalence=ggplot(data, aes(y=NumberofASVs, x=SamplePercent)) + 
+  geom_bar(stat = "identity")
+
+asvprevalence
+```
+
+##Bray Curtis Calculation
+```{r message=FALSE}
+dist = phyloseq::distance(physeqprune, method="bray", weighted=TRUE)
+ordination = ordinate(physeqprune, method="NMDS", distance=dist)
+```
+
+##Bray Curtis Calculation time zero
+```{r message=FALSE}
+dist0 = phyloseq::distance(physeqprune0, method="bray", weighted=TRUE)
+ordination0 = ordinate(physeqprune0, method="NMDS", distance=dist0)
+```
+
+##dist
+```{r}
+beta_boxplot <- function(physeqprune, method = "bray", group) {
+  # Load required libraries
+  library(phyloseq)
+  library(ggplot2)
+
+  # Convert 'timepoint' column to factor with correct levels
+  physeqprune@sam_data$timepoint <- factor(physeqprune@sam_data$timepoint)
+
+  # Identify the correspondence: group and samples
+  group2samp <- list()
+  group_list <- phyloseq::sample_data(physeqprune)[[group]]
+  for (groups in levels(group_list)) {
+    target_group <- which(group_list == groups)
+    group2samp[[groups]] <- phyloseq::sample_names(physeqprune)[target_group]
+  }
+
+  # Calculate beta-diversity
+  beta_div_dist <- phyloseq::distance(physeq = physeq, method = method)
+  beta_div_dist <- as(beta_div_dist, "matrix")
+
+  # Create a list of data frames for each group
+  group_dfs <- lapply(names(group2samp), function(group_name) {
+    group_samples <- group2samp[[group_name]]
+    beta_div_values <- beta_div_dist[group_samples, group_samples]
+    beta_div_values <- beta_div_values[lower.tri(beta_div_values)]
+
+    data.frame(
+      sample_pair = combn(group_samples, 2, paste, collapse = "-"),
+      group = group_name,
+      beta_div_method = method,
+      beta_div_value = beta_div_values
+    )
+  })
+
+  # Combine data frames into a single data frame
+  dist_df <- do.call(rbind, group_dfs)
+
+  # Convert the 'group' column to a factor with correct levels
+  dist_df$group <- factor(dist_df$group, levels = levels(group_list))
+
+  # Check if 'beta_div_value' contains any NA values
+  if (any(is.na(dist_df$beta_div_value))) {
+    stop("The 'beta_div_value' column contains NA values. There may be an issue with calculating beta-diversity.")
+  }
+
+  # Create a ggplot2 boxplot
+  plot_boxplot <- ggplot(data = dist_df, aes(x = group, y = beta_div_value, color = group)) + 
+    geom_boxplot(outlier.shape = NA, fill = "transparent", color = "black") +
+    geom_jitter() + 
+    theme_bw() + 
+    xlab("Group") + ylab("Beta Diversity Value") +
+    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+    labs(x = "Time Point", y = "Bray-Curtis Dissimilarity")
+
+
+  # Save df and boxplot into a list 
+  list_Out <- list("data" = dist_df, "plot" = plot_boxplot) 
+
+  return(list_Out)
+}
+
+# Test function 
+beta_boxplot_result <- beta_boxplot(physeq = physeqprune, method = "bray", group = "timepoint")
+
+## Data
+beta_boxplot_result$data
+
+## Plot
+betabox <- beta_boxplot_result$plot
+
+betabox
+```
+##export tiff with 300dpi
+```{r}
+ggsave(
+  filename="../figures/300dpibetaboxdiv.tiff",
+  plot = betabox,
+  width = 240,
+  height = 180,
+  units = c("mm"),
+  dpi = 300,
+)
+```
+
+##Export beta diveristy
+```{r}
+write.csv(beta_boxplot_result$data, "../betasheets/beta_div.csv")
+```
+
+##Import betadiv after adding a column for time with numeric values instead of Time 0, Time 1, etc
+```{r}
+# Read the CSV file 
+beta_div <- read.csv("../betasheets/beta_div.csv")
+
+# Create a new 'time' column by removing the word 'Time' and converting to numeric
+beta_div$time <- as.numeric(gsub("Time ", "", beta_div$group))
+
+# Write the modified dataframe back to a CSV file
+write.csv(beta_div, "../betasheets/beta_div_modified.csv", row.names = FALSE)
+
+betadiv <- read.csv("../betasheets/beta_div_modified.csv")
+```
+
+##beta Diversity Time Point Observed
+```{r}
+braycurtistime<-ggscatter(betadiv, x = "time", y = "beta_div_value", 
+          add = "reg.line", conf.int = TRUE, cor.coef = TRUE, cor.coeff.args = list(method = "pearson", label.x = 3, label.y = .6, label.sep = "\n"),
+          xlab = "Time", ylab = "Bray-Curtis Dissimilarity")
+braycurtistime
+```
+
+##export tiff with 300dpi
+```{r}
+ggsave(
+  filename="../figures/300dpibetacorrdiv.tiff",
+  plot = braycurtistime,
+  width = 240,
+  height = 180,
+  units = c("mm"),
+  dpi = 300,
+)
+```
+
+##Bray Curtis Sex Plot
+```{r}
+braysex=plot_ordination(physeqprune, ordination, color="sex") + 
+  theme_classic() +
+  theme(strip.background = element_blank()) + stat_ellipse(aes(group=sex))
+braysex
+```
+
+##Bray Curtis Sex Plot time 0
+```{r}
+braysex0=plot_ordination(physeq0, ordination0, color="sex") + 
+  theme_classic() +
+  theme(strip.background = element_blank()) + stat_ellipse(aes(group=sex))
+braysex0
+```
+
+##Bray Curtis Sex Stats
+```{r}
+adonis2(dist ~ sample_data(physeqprune)$sex, strata = sample_data(physeqprune)$bird)
+ps.disper<-betadisper(dist, sample_data(physeqprune)$sex)
+permutest(ps.disper, pair=TRUE)
+```
+
+##Bray Curtis Sex Stats time 0
+```{r}
+adonis2(dist0 ~ sample_data(physeqprune0)$sex)
+ps.disper0<-betadisper(dist0, sample_data(physeqprune0)$sex)
+permutest(ps.disper0, pair=TRUE)
+```
+
+##Bray Curtis Population Plot
+```{r}
+braypop=plot_ordination(physeqprune, ordination, color="population") + theme_classic() +
+  theme(strip.background = element_blank()) +  stat_ellipse(aes(group=population))
+braypop
+```
+
+##Bray Curtis Population Plot time 0
+```{r}
+braypop0=plot_ordination(physeqprune0, ordination0, color="population") + theme_classic() +
+  theme(strip.background = element_blank()) +  stat_ellipse(aes(group=population))
+braypop0
+```
+
+##Bray Curtis Pop Stats
+```{r}
+adonis2(dist ~ sample_data(physeqprune)$population, strata = sample_data(physeqprune)$bird)
+ps.disper<-betadisper(dist, sample_data(physeqprune)$population)
+permutest(ps.disper, pair=TRUE)
+```
+
+##Bray Curtis Pop Stats time 0
+```{r}
+adonis2(dist0 ~ sample_data(physeqprune0)$population)
+ps.disper0<-betadisper(dist0, sample_data(physeq0)$population)
+permutest(ps.disper0, pair=TRUE)
+```
+
+##Bray Curtis Timepoint Plot
+```{r}
+braytimepoint=plot_ordination(physeq, ordination, color="timepoint") + 
+  theme_classic() +
+  theme(strip.background = element_blank()) + stat_ellipse(aes(group=timepoint))
+braytimepoint
+```
+
+##Bray Curtis Time Point
+```{r}
+adonis2(dist ~ sample_data(physeqprune)$timepoint, permutations = 9999, strata = sample_data(physeqprune)$bird)
+ps.disper<-betadisper(dist, sample_data(physeqprune)$timepoint)
+permutest(ps.disper, pair=TRUE)
+```
+
+##Bray Curtis NMDS Flock Plot
+```{r}
+brayflock=plot_ordination(physeqprune, ordination, color="flock") + 
+  theme_classic() +
+  theme(strip.background = element_blank())+ stat_ellipse(aes(group=flock))
+brayflock
+```
+
+##Bray Curtis NMDS Flock Plot time 0
+```{r}
+brayflock0=plot_ordination(physeqprune0, ordination0, color="flock") + 
+  theme_classic() +
+  theme(strip.background = element_blank())+ stat_ellipse(aes(group=flock))
+brayflock0
+```
+
+##Bray Curtis Flock Stats 
+```{r}
+adonis2(dist ~ sample_data(physeqprune)$flock)
+ps.disper<-betadisper(dist, sample_data(physeq)$flock)
+permutest(ps.disper, pair=TRUE)
+```
+
+##Bray Curtis Flock Stats time 0
+```{r}
+adonis2(dist0 ~ sample_data(physeqprune0)$flock)
+ps.disper0<-betadisper(dist0, sample_data(physeqprune0)$flock)
+permutest(ps.disper0, pair=TRUE)
+```
+
+## Create file to analyze how pairs change
+```{r}
+# Read the metadata and beta diversity files
+metadata <- read.csv("../metadata.csv")
+beta_div_modified <- read.csv("../betasheets/beta_div_modified.csv")
+
+# Extract the valid pairs and create the sample_pair column
+sample_pairs <- metadata %>%
+  filter(!is.na(pair)) %>%
+  select(sample, pair, time) %>%
+  distinct() %>%
+  group_by(pair, time) %>%
+  summarise(samples = list(sample), .groups = 'drop') %>%
+  filter(lengths(samples) == 2) %>%
+  rowwise() %>%
+  mutate(
+    sample1 = samples[1],
+    sample2 = samples[2],
+    sample_pair_1 = paste0(sample1, "-", sample2),
+    sample_pair_2 = paste0(sample2, "-", sample1)
+  ) %>%
+  ungroup() %>%
+  select(pair, time, sample_pair_1, sample_pair_2) %>%
+  pivot_longer(cols = starts_with("sample_pair"), names_to = "key", values_to = "sample_pair") %>%
+  select(pair, time, sample_pair)
+
+# Check the resulting data frame
+print(sample_pairs)
+
+# Merge beta_div_modified with sample_pairs to retain only matching sample pairs and add the pair column
+filtered_beta_div <- beta_div_modified %>%
+  inner_join(sample_pairs, by = c("sample_pair" = "sample_pair"))
+
+# Check the filtered and merged data frame
+print(filtered_beta_div)
+
+# Write the filtered and merged data to a new CSV file
+write.csv(filtered_beta_div, "../betasheets/filtered_beta_div_modified_with_pairs.csv", row.names = FALSE)
+```
+
+##betadiv pair changes
+```{r}
+betadivpair<- read.csv("../betasheets/filtered_beta_div_modified_with_pairs.csv")
+
+#test for normality
+shapiro.test(betadivpair$beta_div_value)
+
+#data are not normally distributed
+#Friedman test - p=0.0739
+friedman.test(y=betadivpair$beta_div_value, groups=betadivpair$time.x, blocks=betadivpair$pair)
+
+#pairwise
+pairwise.wilcox.test(betadivpair$beta_div_value, betadivpair$time.x, p.adjust.method="holm")
+
+# Ensure the 'time' column is treated as a factor (if it's categorical)
+betadivpair$time.x <- as.factor(betadivpair$time.x)
+
+# Perform Levene's Test
+result <- leveneTest(beta_div_value ~ time.x, data = betadivpair)
+result
+```
+
+```{r}
+##graph
+betadivpair$group <- as.factor(betadivpair$group)
+betapair<-ggscatter(betadivpair, x = "time.y", y = "beta_div_value", 
+          add = "reg.line", conf.int = TRUE, cor.coef = TRUE, cor.coeff.args = list(method = "pearson", label.x = 3.1, label.sep = "\n"),
+          xlab = "Time", ylab = "Bray-Curtis Distance")
+betapair
+```
+
+##grid bray
+```{r}
+bray=ggarrange(ggarrange(braysex, brayflock, braypop, braytimepoint, 
+          labels = c("A", "B", "C", "D"),
+          ncol = 2, nrow=2), betabox, nrow=2, labels=c("","E"), heights = c(2.5,1.5))
+
+bray
+```
+
+##export tiff with 300dpi
+```{r}
+ggsave(
+  filename="../figures/Figure04BetaDiv.tiff",
+  plot = bray,
+  width = 250,
+  height = 200,
+  units = c("mm"),
+  dpi = 300,
+)
+```
+
+
+
+##Bar plots of Abundance per individual samples in timepoint (Phylum-Merge <1%)
+```{r}
+physeq2 = filter_taxa(physeq, function(x) mean(x) > 0.01, TRUE)
+physeq3 = transform_sample_counts(physeq2, function(x) x / sum(x) )
+glom<-psmelt(physeq3)
+glom <- tax_glom(physeq3, taxrank = 'Phylum')
+data<-psmelt(glom)
+data$Phylum <- as.character(data$Phylum) 
+data$Phylum[data$Abundance < 0.01] <- "< 1% abund."
+medians <- ddply(data, ~Phylum, function(x) c(median=median(x$Abundance)))
+remainder <- medians[medians$median <= 0.01,]$Phylum
+data[data$Phylum %in% remainder,]$Phylum <- "< 1% abund."
+data$Phylum[data$Abundance < 0.010] <- "< 1% abund."
+spatial_plot <- ggplot(data=data, aes(x=bird, y=Abundance, fill=Phylum)) + 
+  facet_wrap(~timepoint, scales = "free")
+barplotphylum<-spatial_plot + geom_bar(aes(), stat="identity", position="fill") + 
+  ggtitle("Phylum Abundance at Each Time Point") + 
+  theme (axis.text.x = element_text(angle=90), 
+         plot.title = element_text(size = 10, face = "bold", hjust = .5)) 
+barplotphylum
+```
+##export tiff with 300dpi
+```{r}
+ggsave(
+  filename="../figures/Figure00Barplot.tiff",
+  plot = barplotphylum,
+  width = 250,
+  height = 150,
+  units = c("mm"),
+  dpi = 300,
+)
+```
+
+##export otu table of phylum abundance
+```{r}
+# Extract abundance matrix from the phyloseq object
+OTU1 = as(otu_table(glom), "matrix")
+# transpose if necessary
+if(taxa_are_rows(glom)){OTU1 <- t(OTU1)}
+# Coerce to data.frame
+OTUdf = as.data.frame(OTU1)
+#export to csv
+write.csv(OTUdf, "../sheets/phylumdf.csv", row.names = TRUE)
+```
+
+##Bar plots of Abundance per individual samples in timepoint (Order-Merge <10%)
+```{r}
+physeq2 = filter_taxa(physeq, function(x) mean(x) > 0.1, TRUE)
+physeq3 = transform_sample_counts(physeq2, function(x) x / sum(x) )
+glom<-psmelt(physeq3)
+glom <- tax_glom(physeq3, taxrank = 'Order')
+data<-psmelt(glom)
+data$Order <- as.character(data$Order) 
+data$Order[data$Abundance < 0.1] <- "< 10% abund."
+medians <- ddply(data, ~Order, function(x) c(median=median(x$Abundance)))
+remainder <- medians[medians$median <= 0.1,]$Order
+data[data$Order %in% remainder,]$Order <- "< 10% abund."
+data$Order[data$Abundance < 0.10] <- "< 10% abund."
+spatial_plot <- ggplot(data=data, aes(x=bird, y=Abundance, fill=Order)) + 
+  facet_wrap(~timepoint, scales = "free")
+barplotorder<-spatial_plot + geom_bar(aes(), stat="identity", position="fill") + 
+  ggtitle("Order Abundance at Each Time Point") + 
+  theme (axis.text.x = element_text(angle=90), 
+         plot.title = element_text(size = 10, face = "bold", hjust = .5)) 
+barplotorder
+```
+##export tiff with 300dpi
+```{r}
+ggsave(
+  filename="../figures/Figure00BarplotOrder.tiff",
+  plot = barplotorder,
+  width = 250,
+  height = 150,
+  units = c("mm"),
+  dpi = 300,
+)
+```
+

@@ -1,0 +1,161 @@
+﻿sample,original,bird,population,site,sex,timepoint,time,flock,serviceband,pair,control,mock
+365,91,BIRD23,resident,Cloaca,female,Time 0,0,residentfemale,232167147,1,no,no
+178,22,BIRD08,migratory,Cloaca,male,Time 0,0,migratorymale,232167120,1,no,no
+241,403,BIRD23,resident,Cloaca,female,Time 1,1,residentfemale,232167147,1,no,no
+167,411,BIRD08,migratory,Cloaca,male,Time 1,1,migratorymale,232167120,1,no,no
+37,187,BIRD23,resident,Cloaca,female,Time 2,2,residentfemale,232167147,1,no,no
+144,149,BIRD08,migratory,Cloaca,male,Time 2,2,migratorymale,232167120,1,no,no
+38,197,BIRD23,resident,Cloaca,female,Time 3,3,residentfemale,232167147,1,no,no
+376,195,BIRD08,migratory,Cloaca,male,Time 3,3,migratorymale,232167120,1,no,no
+221,245,BIRD23,resident,Cloaca,female,Time 4,4,residentfemale,232167147,1,no,no
+247,243,BIRD08,migratory,Cloaca,male,Time 4,4,migratorymale,232167120,1,no,no
+73,449,BIRD23,resident,Cloaca,female,Time 5,5,residentfemale,232167147,1,no,no
+140,459,BIRD08,migratory,Cloaca,male,Time 5,5,migratorymale,232167120,1,no,no
+195,54,BIRD21,resident,Cloaca,female,Time 0,0,residentfemale,232167129,2,no,no
+342,51,BIRD20,resident,Cloaca,male,Time 0,0,residentmale,232167193,2,no,no
+318,397,BIRD21,resident,Cloaca,female,Time 1,1,residentfemale,232167129,2,no,no
+112,395,BIRD20,resident,Cloaca,male,Time 1,1,residentmale,232167193,2,no,no
+83,183,BIRD21,resident,Cloaca,female,Time 2,2,residentfemale,232167129,2,no,no
+250,163,BIRD20,resident,Cloaca,male,Time 2,2,residentmale,232167193,2,no,no
+177,201,BIRD21,resident,Cloaca,female,Time 3,3,residentfemale,232167129,2,no,no
+157,199,BIRD20,resident,Cloaca,male,Time 3,3,residentmale,232167193,2,no,no
+85,249,BIRD21,resident,Cloaca,female,Time 4,4,residentfemale,232167129,2,no,no
+234,247,BIRD20,resident,Cloaca,male,Time 4,4,residentmale,232167193,2,no,no
+253,445,BIRD21,resident,Cloaca,female,Time 5,5,residentfemale,232167129,2,no,no
+161,443,BIRD20,resident,Cloaca,male,Time 5,5,residentmale,232167193,2,no,no
+32,69,BIRD06,migratory,Cloaca,female,Time 0,0,migratoryfemale,232167137,3,no,no
+287,28,BIRD07,migratory,Cloaca,male,Time 0,0,migratorymale,231115833,3,no,no
+257,383,BIRD06,migratory,Cloaca,female,Time 1,1,migratoryfemale,232167137,3,no,no
+46,409,BIRD07,migratory,Cloaca,male,Time 1,1,migratorymale,231115833,3,no,no
+27,179,BIRD06,migratory,Cloaca,female,Time 2,2,migratoryfemale,232167137,3,no,no
+36,147,BIRD07,migratory,Cloaca,male,Time 2,2,migratorymale,231115833,3,no,no
+142,205,BIRD06,migratory,Cloaca,female,Time 3,3,migratoryfemale,232167137,3,no,no
+110,203,BIRD07,migratory,Cloaca,male,Time 3,3,migratorymale,231115833,3,no,no
+338,253,BIRD06,migratory,Cloaca,female,Time 4,4,migratoryfemale,232167137,3,no,no
+16,251,BIRD07,migratory,Cloaca,male,Time 4,4,migratorymale,231115833,3,no,no
+7,431,BIRD06,migratory,Cloaca,female,Time 5,5,migratoryfemale,232167137,3,no,no
+328,457,BIRD07,migratory,Cloaca,male,Time 5,5,migratorymale,231115833,3,no,no
+160,59,BIRD04,migratory,Cloaca,female,Time 0,0,migratoryfemale,232167132,4,no,no
+150,38,BIRD15,resident,Cloaca,male,Time 0,0,residentmale,232167124,4,no,no
+359,379,BIRD04,migratory,Cloaca,female,Time 1,1,migratoryfemale,232167132,4,no,no
+96,385,BIRD15,resident,Cloaca,male,Time 1,1,residentmale,232167124,4,no,no
+369,171,BIRD04,migratory,Cloaca,female,Time 2,2,migratoryfemale,232167132,4,no,no
+102,159,BIRD15,resident,Cloaca,male,Time 2,2,residentmale,232167124,4,no,no
+217,209,BIRD04,migratory,Cloaca,female,Time 3,3,migratoryfemale,232167132,4,no,no
+353,207,BIRD15,resident,Cloaca,male,Time 3,3,residentmale,232167124,4,no,no
+49,257,BIRD04,migratory,Cloaca,female,Time 4,4,migratoryfemale,232167132,4,no,no
+201,255,BIRD15,resident,Cloaca,male,Time 4,4,residentmale,232167124,4,no,no
+312,427,BIRD04,migratory,Cloaca,female,Time 5,5,migratoryfemale,232167132,4,no,no
+149,433,BIRD15,resident,Cloaca,male,Time 5,5,residentmale,232167124,4,no,no
+357,61,BIRD05,migratory,Cloaca,female,Time 0,0,migratoryfemale,232167133,5,no,no
+48,67,BIRD11,migratory,Cloaca,male,Time 0,0,migratorymale,232167136,5,no,no
+139,381,BIRD05,migratory,Cloaca,female,Time 1,1,migratoryfemale,232167133,5,no,no
+343,417,BIRD11,migratory,Cloaca,male,Time 1,1,migratorymale,232167136,5,no,no
+129,177,BIRD05,migratory,Cloaca,female,Time 2,2,migratoryfemale,232167133,5,no,no
+232,157,BIRD11,migratory,Cloaca,male,Time 2,2,migratorymale,232167136,5,no,no
+303,213,BIRD05,migratory,Cloaca,female,Time 3,3,migratoryfemale,232167133,5,no,no
+45,211,BIRD11,migratory,Cloaca,male,Time 3,3,migratorymale,232167136,5,no,no
+192,261,BIRD05,migratory,Cloaca,female,Time 4,4,migratoryfemale,232167133,5,no,no
+258,259,BIRD11,migratory,Cloaca,male,Time 4,4,migratorymale,232167136,5,no,no
+171,429,BIRD05,migratory,Cloaca,female,Time 5,5,migratoryfemale,232167133,5,no,no
+231,465,BIRD11,migratory,Cloaca,male,Time 5,5,migratorymale,232167136,5,no,no
+246,57,BIRD22,resident,Cloaca,female,Time 0,0,residentfemale,232167131,6,no,no
+348,55,BIRD19,resident,Cloaca,male,Time 0,0,residentmale,232167130,6,no,no
+5,399,BIRD22,resident,Cloaca,female,Time 1,1,residentfemale,232167131,6,no,no
+197,393,BIRD19,resident,Cloaca,male,Time 1,1,residentmale,232167130,6,no,no
+193,185,BIRD22,resident,Cloaca,female,Time 2,2,residentfemale,232167131,6,no,no
+19,167,BIRD19,resident,Cloaca,male,Time 2,2,residentmale,232167130,6,no,no
+108,217,BIRD22,resident,Cloaca,female,Time 3,3,residentfemale,232167131,6,no,no
+266,215,BIRD19,resident,Cloaca,male,Time 3,3,residentmale,232167130,6,no,no
+43,265,BIRD22,resident,Cloaca,female,Time 4,4,residentfemale,232167131,6,no,no
+345,263,BIRD19,resident,Cloaca,male,Time 4,4,residentmale,232167130,6,no,no
+290,447,BIRD22,resident,Cloaca,female,Time 5,5,residentfemale,232167131,6,no,no
+25,441,BIRD19,resident,Cloaca,male,Time 5,5,residentmale,232167130,6,no,no
+205,121,BIRD26,resident,Cloaca,female,Time 0,0,residentfemale,232167161,7,no,no
+198,47,BIRD17,resident,Cloaca,male,Time 0,0,residentmale,232167127,7,no,no
+323,407,BIRD26,resident,Cloaca,female,Time 1,1,residentfemale,232167161,7,no,no
+300,389,BIRD17,resident,Cloaca,male,Time 1,1,residentmale,232167127,7,no,no
+242,189,BIRD26,resident,Cloaca,female,Time 2,2,residentfemale,232167161,7,no,no
+286,161,BIRD17,resident,Cloaca,male,Time 2,2,residentmale,232167127,7,no,no
+99,221,BIRD26,resident,Cloaca,female,Time 3,3,residentfemale,232167161,7,no,no
+374,219,BIRD17,resident,Cloaca,male,Time 3,3,residentmale,232167127,7,no,no
+213,269,BIRD26,resident,Cloaca,female,Time 4,4,residentfemale,232167161,7,no,no
+333,267,BIRD17,resident,Cloaca,male,Time 4,4,residentmale,232167127,7,no,no
+151,455,BIRD26,resident,Cloaca,female,Time 5,5,residentfemale,232167161,7,no,no
+388,437,BIRD17,resident,Cloaca,male,Time 5,5,residentmale,232167127,7,no,no
+264,93,BIRD24,resident,Cloaca,female,Time 0,0,residentfemale,232167148,8,no,no
+24,83,BIRD12,migratory,Cloaca,male,Time 0,0,migratorymale,232167143,8,no,no
+279,401,BIRD24,resident,Cloaca,female,Time 1,1,residentfemale,232167148,8,no,no
+101,419,BIRD12,migratory,Cloaca,male,Time 1,1,migratorymale,232167143,8,no,no
+244,191,BIRD24,resident,Cloaca,female,Time 2,2,residentfemale,232167148,8,no,no
+105,155,BIRD12,migratory,Cloaca,male,Time 2,2,migratorymale,232167143,8,no,no
+29,225,BIRD24,resident,Cloaca,female,Time 3,3,residentfemale,232167148,8,no,no
+170,223,BIRD12,migratory,Cloaca,male,Time 3,3,migratorymale,232167143,8,no,no
+249,273,BIRD24,resident,Cloaca,female,Time 4,4,residentfemale,232167148,8,no,no
+202,271,BIRD12,migratory,Cloaca,male,Time 4,4,migratorymale,232167143,8,no,no
+86,451,BIRD24,resident,Cloaca,female,Time 5,5,residentfemale,232167148,8,no,no
+40,467,BIRD12,migratory,Cloaca,male,Time 5,5,migratorymale,232167143,8,no,no
+31,19,BIRD03,migratory,Cloaca,female,Time 0,0,migratoryfemale,232167119,9,no,no
+173,41,BIRD16,resident,Cloaca,male,Time 0,0,residentmale,232167125,9,no,no
+358,377,BIRD03,migratory,Cloaca,female,Time 1,1,migratoryfemale,232167119,9,no,no
+295,387,BIRD16,resident,Cloaca,male,Time 1,1,residentmale,232167125,9,no,no
+111,181,BIRD03,migratory,Cloaca,female,Time 2,2,migratoryfemale,232167119,9,no,no
+146,165,BIRD16,resident,Cloaca,male,Time 2,2,residentmale,232167125,9,no,no
+185,229,BIRD03,migratory,Cloaca,female,Time 3,3,migratoryfemale,232167119,9,no,no
+143,227,BIRD16,resident,Cloaca,male,Time 3,3,residentmale,232167125,9,no,no
+9,277,BIRD03,migratory,Cloaca,female,Time 4,4,migratoryfemale,232167119,9,no,no
+311,275,BIRD16,resident,Cloaca,male,Time 4,4,residentmale,232167125,9,no,no
+378,425,BIRD03,migratory,Cloaca,female,Time 5,5,migratoryfemale,232167119,9,no,no
+367,435,BIRD16,resident,Cloaca,male,Time 5,5,residentmale,232167125,9,no,no
+55,13,BIRD01,migratory,Cloaca,female,Time 0,0,migratoryfemale,232167117,10,no,no
+297,65,BIRD10,migratory,Cloaca,male,Time 0,0,migratorymale,232167135,10,no,no
+23,373,BIRD01,migratory,Cloaca,female,Time 1,1,migratoryfemale,232167117,10,no,no
+291,415,BIRD10,migratory,Cloaca,male,Time 1,1,migratorymale,232167135,10,no,no
+134,173,BIRD01,migratory,Cloaca,female,Time 2,2,migratoryfemale,232167117,10,no,no
+340,153,BIRD10,migratory,Cloaca,male,Time 2,2,migratorymale,232167135,10,no,no
+76,233,BIRD01,migratory,Cloaca,female,Time 3,3,migratoryfemale,232167117,10,no,no
+316,231,BIRD10,migratory,Cloaca,male,Time 3,3,migratorymale,232167135,10,no,no
+276,281,BIRD01,migratory,Cloaca,female,Time 4,4,migratoryfemale,232167117,10,no,no
+194,279,BIRD10,migratory,Cloaca,male,Time 4,4,migratorymale,232167135,10,no,no
+334,421,BIRD01,migratory,Cloaca,female,Time 5,5,migratoryfemale,232167117,10,no,no
+33,463,BIRD10,migratory,Cloaca,male,Time 5,5,migratorymale,232167135,10,no,no
+63,111,BIRD25,resident,Cloaca,female,Time 0,0,residentfemale,232167157,11,no,no
+42,49,BIRD18,resident,Cloaca,male,Time 0,0,residentmale,232167128,11,no,no
+269,405,BIRD25,resident,Cloaca,female,Time 1,1,residentfemale,232167157,11,no,no
+263,391,BIRD18,resident,Cloaca,male,Time 1,1,residentmale,232167128,11,no,no
+235,193,BIRD25,resident,Cloaca,female,Time 2,2,residentfemale,232167157,11,no,no
+275,169,BIRD18,resident,Cloaca,male,Time 2,2,residentmale,232167128,11,no,no
+285,237,BIRD25,resident,Cloaca,female,Time 3,3,residentfemale,232167157,11,no,no
+272,235,BIRD18,resident,Cloaca,male,Time 3,3,residentmale,232167128,11,no,no
+138,285,BIRD25,resident,Cloaca,female,Time 4,4,residentfemale,232167157,11,no,no
+175,283,BIRD18,resident,Cloaca,male,Time 4,4,residentmale,232167128,11,no,no
+387,453,BIRD25,resident,Cloaca,female,Time 5,5,residentfemale,232167157,11,no,no
+310,439,BIRD18,resident,Cloaca,male,Time 5,5,residentmale,232167128,11,no,no
+200,16,BIRD02,migratory,Cloaca,female,Time 0,0,migratoryfemale,232167118,12,no,no
+87,25,BIRD09,migratory,Cloaca,male,Time 0,0,migratorymale,232167121,12,no,no
+243,375,BIRD02,migratory,Cloaca,female,Time 1,1,migratoryfemale,232167118,12,no,no
+130,413,BIRD09,migratory,Cloaca,male,Time 1,1,migratorymale,232167121,12,no,no
+218,175,BIRD02,migratory,Cloaca,female,Time 2,2,migratoryfemale,232167118,12,no,no
+341,151,BIRD09,migratory,Cloaca,male,Time 2,2,migratorymale,232167121,12,no,no
+52,241,BIRD02,migratory,Cloaca,female,Time 3,3,migratoryfemale,232167118,12,no,no
+62,239,BIRD09,migratory,Cloaca,male,Time 3,3,migratorymale,232167121,12,no,no
+92,289,BIRD02,migratory,Cloaca,female,Time 4,4,migratoryfemale,232167118,12,no,no
+65,287,BIRD09,migratory,Cloaca,male,Time 4,4,migratorymale,232167121,12,no,no
+239,423,BIRD02,migratory,Cloaca,female,Time 5,5,migratoryfemale,232167118,12,no,no
+248,461,BIRD09,migratory,Cloaca,male,Time 5,5,migratorymale,232167121,12,no,no
+Blk1,,,,,,,,,,,yes,no
+Blk2,,,,,,,,,,,yes,no
+Blk3,,,,,,,,,,,yes,no
+Blk4,,,,,,,,,,,yes,no
+Blk5,,,,,,,,,,,yes,no
+Blk6,,,,,,,,,,,yes,no
+Blk7,,,,,,,,,,,yes,no
+Blk8,,,,,,,,,,,yes,no
+Blk9,,,,,,,,,,,yes,no
+Blk10,,,,,,,,,,,yes,no
+Blk11,,,,,,,,,,,yes,no
+Blk12,,,,,,,,,,,yes,no
+WaterNegA,,,,,,,,,,,yes,no
+WaterNegB,,,,,,,,,,,yes,no
+WaterNegC,,,,,,,,,,,yes,no
+WaterNegD,,,,,,,,,,,yes,no
