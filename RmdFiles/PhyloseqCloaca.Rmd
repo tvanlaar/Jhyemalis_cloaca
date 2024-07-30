@@ -842,3 +842,92 @@ ggsave(
 )
 ```
 
+#Differential species ID
+```{r warning=FALSE}
+# Extract abundance data (OTU table)
+abundance_data <- as.data.frame(otu_table(physeqprune))
+
+# Extract the grouping variable (time) from sample data
+time_group <- sample_data(physeqprune)$time
+
+# Ensure the grouping variable is a factor
+time_group <- as.factor(time_group)
+
+# Initialize a list to store SIMPER results
+all_simper_results <- list()
+
+# Get unique pairs of time points
+time_pairs <- combn(unique(time_group), 2, simplify = FALSE)
+
+# Run SIMPER analysis for each pairwise comparison
+for (pair in time_pairs) {
+  time1 <- pair[1]
+  time2 <- pair[2]
+  comparison_label <- paste(time1, time2, sep = "_")
+
+  # Subset data for the pair
+  subset_data <- subset_samples(physeqprune, time %in% pair)
+  subset_abundance_data <- as.data.frame(otu_table(subset_data))
+  subset_time_group <- sample_data(subset_data)$time
+
+  # Run SIMPER analysis
+  simper_result <- simper(subset_abundance_data, group = as.factor(subset_time_group), permutations = 100)
+  simper_summary <- summary(simper_result)
+
+  # Check if simper_summary has the comparison_label data frame
+  if (!is.null(simper_summary[[comparison_label]])) {
+    # Extract the data frame from the list and add comparison information
+    simper_df <- as.data.frame(simper_summary[[comparison_label]])
+    simper_df$species <- rownames(simper_df)
+    rownames(simper_df) <- NULL
+    simper_df$comparison <- comparison_label
+
+    # Store results
+    all_simper_results[[comparison_label]] <- simper_df
+  }
+}
+
+# Combine all SIMPER results into a single data frame
+combined_simper_df <- do.call(rbind, all_simper_results)
+
+# Save combined SIMPER results to a CSV file
+write.csv(combined_simper_df, "../differentialexpression/simper_results.csv", row.names = FALSE)
+
+# Extract OTU names and their contributions
+otu_contributions <- combined_simper_df %>%
+  select(species, average, sd, ratio, ava, avb, cumsum, comparison) %>%
+  arrange(species)
+
+# Initialize a data frame to store Mann-Whitney U Test results
+results <- data.frame()
+
+# Perform Mann-Whitney U Test on OTU contributions between groups
+for (otu in unique(otu_contributions$species)) {
+  otu_data <- subset(otu_contributions, species == otu)
+
+  for (comparison in unique(otu_data$comparison)) {
+    comparison_data <- subset(otu_data, comparison == comparison)
+
+    # Perform Mann-Whitney U Test
+    test_result <- wilcox.test(comparison_data$ava, comparison_data$avb)
+
+    # Store results
+    results <- rbind(results, data.frame(OTU = otu, comparison = comparison, p.value = test_result$p.value))
+  }
+}
+
+# Adjust p-values for multiple testing (optional)
+results$adj.p.value <- p.adjust(results$p.value, method = "BH")
+
+# Save Mann-Whitney results to a CSV file
+write.csv(results, "../differentialexpression/mann_whitney_results.csv", row.names = FALSE)
+
+# View significant results
+significant_results <- subset(results, adj.p.value < 0.05)
+
+# Save significant results to a CSV file
+write.csv(significant_results, "../differentialexpression/significant_results.csv", row.names = FALSE)
+
+# Print significant results
+print(significant_results)
+```
